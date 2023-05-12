@@ -18,6 +18,7 @@ type Job struct {
 	Context   context.Context
 	Name      string
 	ImageName string
+	Id        string
 	Health    int
 }
 
@@ -49,19 +50,10 @@ func (j *Job) Run() error {
 		return err
 	}
 
+	j.Id = res.ID
+
 	if err := cli.ContainerStart(j.Context, res.ID, types.ContainerStartOptions{}); err != nil {
 		return err
-	}
-
-	statusCh, errCh := cli.ContainerWait(j.Context, res.ID, container.WaitConditionNotRunning)
-
-	// TODO: return channels for orchestrator to check on container status
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return err
-		}
-	case <-statusCh:
 	}
 
 	return nil
