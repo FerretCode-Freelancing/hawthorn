@@ -2,11 +2,13 @@ package containers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/ferretcode-freelancing/hawthorn/builder"
+	"github.com/ferretcode-freelancing/hawthorn/orchestrator"
 	"github.com/ferretcode-freelancing/hawthorn/routes"
 	"github.com/gorilla/sessions"
 )
@@ -14,11 +16,11 @@ import (
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 
 type Container struct {
-	Name string
+	Name    string
 	RepoURL string
 }
 
-func New(w http.ResponseWriter, r *http.Request) error {
+func New(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) error {
 	session, _ := store.Get(r, "hawthorn")
 
 	if session == nil {
@@ -27,7 +29,7 @@ func New(w http.ResponseWriter, r *http.Request) error {
 		return errors.New("you are not authenticated")
 	}
 
-	container := Container{}	
+	container := Container{}
 
 	err := routes.ProcessBody(r.Body, &container)
 
@@ -62,6 +64,22 @@ func New(w http.ResponseWriter, r *http.Request) error {
 
 		return err
 	}
+
+	job := orchestrator.NewJob(orchestrator.Job{
+		Name:      strings.Join(repoName, ""),
+		ImageName: fmt.Sprintf("%s/%s", os.Getenv("DOCKER_USER"), strings.Join(repoName, "")),
+	})
+
+	err = o.New(job)
+
+	if err != nil {
+		http.Error(w, "there was an error deploying your repository", http.StatusInternalServerError)
+
+		return err
+	}
+
+	w.WriteHeader(200)
+	w.Write([]byte("your repository was deployed successfully"))
 
 	return nil
 }
