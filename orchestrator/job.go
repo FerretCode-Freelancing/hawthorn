@@ -2,6 +2,7 @@ package orchestrator
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -22,6 +23,8 @@ type Job struct {
 	Health    int
 }
 
+// TODO: cache containers & resume if program restarted
+
 func NewJob(job Job) Job {
 	job.Context = context.Background()
 
@@ -34,6 +37,8 @@ func (j *Job) Run() error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(j.ImageName)
 
 	res, err := cli.ContainerCreate(
 		j.Context,
