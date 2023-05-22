@@ -65,7 +65,7 @@ func (o *Orchestrator) autoClean(client client.Client) {
 		if len(job.Id) == 0 {
 			continue
 		}
-
+		
 		o.Jobs = append(o.Jobs[:i], o.Jobs[i+1:]...)
 
 		err := client.ContainerRemove(o.Context, job.Id, types.ContainerRemoveOptions{})
