@@ -16,8 +16,8 @@ import (
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 
 type Container struct {
-	Name    string
-	RepoURL string
+	Name    string `json:"name"`
+	RepoURL string `json:"repo_url"`
 }
 
 func New(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) error {
@@ -49,7 +49,7 @@ func New(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) er
 
 	repoName := strings.Split(container.RepoURL, "/")
 
-	err = builder.ExtractRepo(session.Values["owner"].(int64), repoName[len(repoName)-1])
+	err = builder.ExtractRepo(session.Values["owner"].(int), repoName[len(repoName)-1])
 
 	if err != nil {
 		http.Error(w, "there was an error extracting your repository", http.StatusInternalServerError)
@@ -57,7 +57,7 @@ func New(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) er
 		return err
 	}
 
-	err = builder.Build(session.Values["owner"].(int64), repoName[len(repoName)-1])
+	err = builder.Build(session.Values["owner"].(int), repoName[len(repoName)-1])
 
 	if err != nil {
 		http.Error(w, "there was an error building your repository", http.StatusInternalServerError)
@@ -65,9 +65,11 @@ func New(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) er
 		return err
 	}
 
+	fmt.Println(repoName[len(repoName)-1])
+
 	job := orchestrator.NewJob(orchestrator.Job{
-		Name:      strings.Join(repoName, ""),
-		ImageName: fmt.Sprintf("%s/%s", os.Getenv("DOCKER_USER"), strings.Join(repoName, "")),
+		Name:      repoName[len(repoName)-1],
+		ImageName: repoName[len(repoName)-1],
 	})
 
 	err = o.New(job)

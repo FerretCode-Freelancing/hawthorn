@@ -25,6 +25,12 @@ func Download(r *http.Request, repoURL string) error {
 
 	session, _ := store.Get(r, "hawthorn")
 
+	if session.Values["token"] == nil {
+		return errors.New("you are not authenticated")
+	}
+
+	fmt.Println(session.Values["token"])
+
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: session.Values["token"].(string)},
 	)
@@ -36,7 +42,7 @@ func Download(r *http.Request, repoURL string) error {
 
 	repo, _, err := client.Repositories.Get(
 		ctx, 
-		session.Values["owner"].(string),
+		session.Values["login"].(string),
 		repoName[len(repoName) - 1],
 	)
 
@@ -101,17 +107,17 @@ func Download(r *http.Request, repoURL string) error {
 	return nil
 }
 
-func ExtractRepo(ownerId int64, repoName string) error {
+func ExtractRepo(ownerId int, repoName string) error {
 	outputDir := fmt.Sprintf(
 		"/tmp/hawthorn/out/%s-%s",
-		strconv.FormatInt(ownerId, 10),
+		strconv.FormatInt(int64(ownerId), 10),
 		repoName,
 	)
 
 	zipball, err := zip.OpenReader(
 		fmt.Sprintf(
 			"/tmp/hawthorn/%s-%s.zip",
-			strconv.FormatInt(ownerId, 10),
+			strconv.FormatInt(int64(ownerId), 10),
 			repoName,
 		),
 	)

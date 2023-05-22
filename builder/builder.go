@@ -1,16 +1,18 @@
 package builder
 
 import (
+	"io"
+	"os"
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
 )
 
-func Build(ownerId int64, repoName string) error {
+func Build(ownerId int, repoName string) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 
 	if err != nil {
@@ -18,20 +20,33 @@ func Build(ownerId int64, repoName string) error {
 	}
 
 	path := fmt.Sprintf(
-		"/tmp/hawthorn/out/%s-%s/Dockerfile",
-		strconv.FormatInt(ownerId, 10),
+		"/tmp/hawthorn/out/%s-%s",
+		strconv.FormatInt(int64(ownerId), 10),
 		repoName,
 	)
 
-	file, err := os.Open(path)
+	buildContext, err := archive.TarWithOptions(path, &archive.TarOptions{})
 
 	if err != nil {
 		return err
 	}
 
+	defer buildContext.Close()
+
 	ctx := context.Background()
 
-	res, err := cli.ImageBuild(ctx, file, types.ImageBuildOptions{})
+	res, err := cli.ImageBuild(ctx, buildContext, types.ImageBuildOptions{
+		Context: buildContext,
+		Tags: []string{fmt.Sprintf("%s:latest", repoName)},
+		Dockerfile: "Dockerfile",
+		Remove: true,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(os.Stdout, res.Body)
 
 	if err != nil {
 		return err

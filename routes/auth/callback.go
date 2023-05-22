@@ -17,6 +17,7 @@ type GithubResponse struct {
 
 type GithubUser struct {
 	Id int `json:"id"`
+	Login string `json:"login"`
 }
 
 func Callback(w http.ResponseWriter, r *http.Request) error {
@@ -43,6 +44,7 @@ func Callback(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	session.Values["owner"] = user.Id
+	session.Values["login"] = user.Login
 
 	err = session.Save(r, w)
 
