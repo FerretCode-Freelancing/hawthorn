@@ -2,6 +2,7 @@ package orchestrator
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 )
@@ -27,6 +28,45 @@ func NewCache(c Cache) Cache {
 	return c
 }
 
+func (c *Cache) SearchCache(id string) (Job, error) {
+	file, err := os.Open(c.Path)
+
+	if err != nil {
+		return Job{}, err
+	}
+
+	data, err := io.ReadAll(file)
+
+	if err != nil {
+		return Job{}, err
+	}
+
+	cacheData := CacheData{}
+
+	err = json.Unmarshal(data, &cacheData)
+
+	if err != nil {
+		return Job{}, err
+	}
+
+  for _, job := range cacheData.Jobs {
+    if job.ContainerId == id {
+      job := NewJob(
+        Job{
+          Name: job.Name,
+          ImageName: job.Name,
+          Id: job.ContainerId,
+          Health: Healthy,
+        },
+      )
+
+      return job, nil
+    }
+  }
+
+  return Job{}, errors.New("no job found")
+}
+
 func (c *Cache) CacheJob(j Job) error {
 	file, err := os.Open(c.Path)
 
@@ -47,7 +87,6 @@ func (c *Cache) CacheJob(j Job) error {
 	if err != nil {
 		return err
 	}
-
 
 	job := CacheJob{
 		Name: j.Name,
@@ -71,6 +110,44 @@ func (c *Cache) CacheJob(j Job) error {
 	return nil
 }
 
-func (c *Cache) UncacheJob() error {
+func (c *Cache) UncacheJob(j Job) error {
+  file, err := os.Open(c.Path)
+
+	if err != nil {
+		return err
+	}
+
+	data, err := io.ReadAll(file)
+
+	if err != nil {
+		return err
+	}
+
+	cacheData := CacheData{}
+
+	err = json.Unmarshal(data, &cacheData)
+
+	if err != nil {
+		return err
+	}
+
+  for i := range cacheData.Jobs {
+    if cacheData.Jobs[i].ContainerId == j.Id {
+      cacheData.Jobs = append(cacheData.Jobs[:i], cacheData.Jobs[i+1:]...)
+    }
+  }
+
+  stringified, err := json.Marshal(cacheData)
+
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(c.Path, stringified, os.ModeAppend)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

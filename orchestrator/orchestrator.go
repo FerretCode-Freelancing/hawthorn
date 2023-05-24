@@ -13,6 +13,7 @@ import (
 
 type Orchestrator struct {
 	Context context.Context
+  Cache Cache
 	Jobs    []Job
 }
 
@@ -22,6 +23,10 @@ func NewOrchestrator(o Orchestrator) (Orchestrator, error) {
 	if err != nil {
 		return Orchestrator{}, err
 	}
+
+  cache := NewCache(Cache{})
+
+  o.Cache = cache
 
 	ticker := time.NewTicker(5 * time.Second)
 
@@ -34,6 +39,30 @@ func NewOrchestrator(o Orchestrator) (Orchestrator, error) {
 	}()
 
 	return o, nil
+}
+
+func (o *Orchestrator) reattach(client client.Client) {
+  containers, err := client.ContainerList(o.Context, types.ContainerListOptions{}) 
+
+  if err != nil {
+    fmt.Println(err)
+
+    return 
+  }
+
+  for _, container := range containers {
+    cacheJob, err := o.Cache.SearchCache(container.ID)
+
+    if err != nil {
+      fmt.Println(err)
+
+      continue
+    }
+
+    o.Jobs = append(o.Jobs, cacheJob)
+  }
+
+  return 
 }
 
 func (o *Orchestrator) autoHeal(client client.Client) {
@@ -65,10 +94,18 @@ func (o *Orchestrator) autoClean(client client.Client) {
 		if len(job.Id) == 0 {
 			continue
 		}
+
+    err := o.Cache.UncacheJob(job)
+
+    if err != nil {
+      fmt.Println(err)
+
+      continue
+    }
 		
 		o.Jobs = append(o.Jobs[:i], o.Jobs[i+1:]...)
 
-		err := client.ContainerRemove(o.Context, job.Id, types.ContainerRemoveOptions{})
+		err = client.ContainerRemove(o.Context, job.Id, types.ContainerRemoveOptions{})
 
 		if err != nil {
 			fmt.Println(err)
@@ -93,9 +130,15 @@ func (o *Orchestrator) Get(job string) (Job, error) {
 }
 
 func (o *Orchestrator) New(job Job) error {
+  err := o.Cache.CacheJob(job)
+
+  if err != nil {
+    return err
+  }
+
 	o.Jobs = append(o.Jobs, job)
 
-	err := job.Run()
+	err = job.Run()
 
 	if err != nil {
 		return err
