@@ -3,6 +3,7 @@ package orchestrator
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 )
@@ -50,6 +51,8 @@ func (c *Cache) SearchCache(id string) (Job, error) {
 	}
 
   for _, job := range cacheData.Jobs {
+		fmt.Println(job)
+
     if job.ContainerId == id {
       job := NewJob(
         Job{

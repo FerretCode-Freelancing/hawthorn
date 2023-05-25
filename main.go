@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/ferretcode-freelancing/hawthorn/orchestrator"
 	"github.com/ferretcode-freelancing/hawthorn/routes/auth"
@@ -18,6 +20,21 @@ func main() {
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.RealIP)
+
+	err := os.MkdirAll("/tmp/hawthorn", os.ModePerm)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := os.Stat("/tmp/hawthorn/cache.json"); os.IsNotExist(err) == true {
+		err = os.WriteFile("/tmp/hawthorn/cache.json", []byte("{}"), fs.ModePerm)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 
 	ctx := context.Background()
 

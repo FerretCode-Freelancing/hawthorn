@@ -30,6 +30,8 @@ func NewOrchestrator(o Orchestrator) (Orchestrator, error) {
 
 	ticker := time.NewTicker(5 * time.Second)
 
+	o.reattach(*client)
+
 	go func() {
 		for {
 			<-ticker.C
@@ -54,12 +56,16 @@ func (o *Orchestrator) reattach(client client.Client) {
     cacheJob, err := o.Cache.SearchCache(container.ID)
 
     if err != nil {
-      fmt.Println(err)
+			if err.Error() != "no job found" {
+				fmt.Println(err)
+			}
 
       continue
     }
 
     o.Jobs = append(o.Jobs, cacheJob)
+
+		fmt.Println(o.Jobs)
   }
 
   return 
@@ -130,19 +136,21 @@ func (o *Orchestrator) Get(job string) (Job, error) {
 }
 
 func (o *Orchestrator) New(job Job) error {
-  err := o.Cache.CacheJob(job)
+	o.Jobs = append(o.Jobs, job)
+
+	err := job.Run()
+
+	if err != nil {
+		return err
+	}
+
+  err = o.Cache.CacheJob(job)
 
   if err != nil {
     return err
   }
 
-	o.Jobs = append(o.Jobs, job)
 
-	err = job.Run()
-
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
