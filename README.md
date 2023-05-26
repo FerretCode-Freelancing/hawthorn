@@ -18,3 +18,7 @@ hawthorn is a tool for running, healing & autocleaning containers that you creat
       "repo_url": "link to the github repo"
     }
     ```
+
+## benchmarks
+
+- when running with low build volume & number of containers, hawthorn seems to use around 15 MB of memory and <1% CPU
