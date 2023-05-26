@@ -101,28 +101,47 @@ func (o *Orchestrator) autoClean(client client.Client) {
 			continue
 		}
 
-    err := o.Cache.UncacheJob(job)
-
-    if err != nil {
-      fmt.Println(err)
-
-      continue
-    }
-		
-		o.Jobs = append(o.Jobs[:i], o.Jobs[i+1:]...)
-
-		err = client.ContainerRemove(o.Context, job.Id, types.ContainerRemoveOptions{})
+		container, err := client.ContainerInspect(o.Context, job.Id) 
 
 		if err != nil {
 			fmt.Println(err)
 
 			continue
 		}
+
+		if container.RestartCount > 4 {
+			err := o.Cache.UncacheJob(job)
+
+			if err != nil {
+				fmt.Println(err)
+
+				continue
+			}
+		
+			o.Jobs = append(o.Jobs[:i], o.Jobs[i+1:]...)
+
+			err = client.ContainerRemove(o.Context, job.Id, types.ContainerRemoveOptions{})
+
+			if err != nil {
+				fmt.Println(err)
+
+				continue
+			}
+		}
 	}
 }
 
-func (o *Orchestrator) List() []Job {
-	return o.Jobs
+func (o *Orchestrator) List() []CacheJob {
+	var jobs []CacheJob
+
+	for i := range o.Jobs {
+		jobs = append(jobs, CacheJob{
+			Name: o.Jobs[i].Name,
+			ContainerId: o.Jobs[i].Id,
+		})
+	}
+
+	return jobs 
 }
 
 func (o *Orchestrator) Get(job string) (Job, error) {
@@ -149,8 +168,6 @@ func (o *Orchestrator) New(job Job) error {
   if err != nil {
     return err
   }
-
-
 
 	return nil
 }

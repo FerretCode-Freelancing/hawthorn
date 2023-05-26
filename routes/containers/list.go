@@ -3,13 +3,14 @@ package containers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/ferretcode-freelancing/hawthorn/orchestrator"
 )
 
 type Response struct {
-	Jobs []orchestrator.Job `json:"job"`
+	Jobs []orchestrator.CacheJob `json:"jobs"`
 }
 
 func List(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) error {
@@ -22,6 +23,15 @@ func List(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) e
 	}
 
 	jobs := o.List()
+
+	if len(jobs) == 0 {
+		w.WriteHeader(200)
+		w.Write([]byte("There are no jobs"))
+
+		return nil
+	}
+
+	fmt.Println(jobs)
 
 	response := Response{Jobs: jobs}
 
