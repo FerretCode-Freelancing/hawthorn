@@ -55,14 +55,6 @@ func main() {
 		}
 	})
 
-	r.Get("/auth/callback", func(w http.ResponseWriter, r *http.Request) {
-		err := auth.Callback(w, r)
-
-		if err != nil {
-			fmt.Println(err)
-		}
-	})
-
 	// containers
 	r.Get("/containers/list", func(w http.ResponseWriter, r *http.Request) {
 		err := containers.List(w, r, o)
