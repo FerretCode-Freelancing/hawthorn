@@ -1,12 +1,9 @@
 package auth
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/ferretcode-freelancing/hawthorn/routes"
 	"github.com/gorilla/sessions"
@@ -19,80 +16,26 @@ type GithubResponse struct {
 }
 
 type GithubUser struct {
-	Id    int    `json:"id"`
+	Id int `json:"id"`
 	Login string `json:"login"`
 }
 
-func Callback(w http.ResponseWriter, r *http.Request, deviceCode string, interval int) error {
-	ticker := time.NewTicker(time.Duration(interval) * time.Second)
+func Callback(w http.ResponseWriter, r *http.Request) error {
+	code := r.URL.Query().Get("code")	
 
-	quit := make(chan struct{})
-
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				err := poll(w, r, deviceCode)
-
-				if err != nil {
-					quit <- struct{}{}
-				}
-			case <-quit:
-				ticker.Stop()
-				return
-			}
-		}
-	}()
-
-	return nil
-}
-
-func poll(w http.ResponseWriter, r *http.Request, deviceCode string) error {
-	req, err := http.NewRequest(
-		"POST",
-		fmt.Sprintf(
-			"https://github.com/login/oauth/access_token?client_id=%s&device_code=%s&grant_type=urn:ietf:params:oauth:grant-type:device_code",
-			os.Getenv("GH_CLIENT_ID"),
-			deviceCode,
-		),
-		nil,
-	)
+	token, err := getCode(code)
 
 	if err != nil {
+		http.Error(w, "there was an error logging in with github", http.StatusInternalServerError)
+
 		return err
-	}
-
-	authenticated := false
-
-	githubResponse := GithubResponse{}
-
-	for !authenticated {
-		res, err := http.DefaultClient.Do(req)
-
-		if err != nil {
-			return err
-		}
-
-		tokenResponseBytes, err := io.ReadAll(res.Body)
-
-		if err != nil {
-			return err
-		}
-
-		if err := json.Unmarshal(tokenResponseBytes, &githubResponse); err != nil {
-			return err
-		}
-
-		if githubResponse.AccessToken == "" { return nil }
-
-		authenticated = true
 	}
 
 	session, _ := store.Get(r, "hawthorn")
 
-	session.Values["token"] = githubResponse.AccessToken
+	session.Values["token"] = token
 
-	user, err := getUser(githubResponse.AccessToken)
+	user, err := getUser(token)
 
 	if err != nil {
 		http.Error(w, "there was an error logging in with github", http.StatusInternalServerError)
@@ -110,6 +53,9 @@ func poll(w http.ResponseWriter, r *http.Request, deviceCode string) error {
 
 		return err
 	}
+
+	w.WriteHeader(200)
+	w.Write([]byte("you have been authenticated successfully"))
 
 	return nil
 }
@@ -145,4 +91,48 @@ func getUser(token string) (GithubUser, error) {
 	}
 
 	return user, nil
+}
+
+
+func getCode(code string) (string, error) {
+	client := http.Client{}
+
+	clientId := os.Getenv("GH_CLIENT_ID")
+
+	clientSecret := os.Getenv("GH_CLIENT_SECRET")
+
+	url := fmt.Sprintf(
+		"https://github.com/login/oauth/access_token?client_id=%s&client_secret=%s&code=%s",
+		clientId,
+		clientSecret,
+		code,
+	)
+
+	req, err := http.NewRequest(
+		"POST",
+		url,
+		nil,
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	res, err := client.Do(req)
+
+	if err != nil {
+		return "", err
+	}
+
+	var githubResponse GithubResponse
+
+	parseErr := routes.ProcessBody(res.Body, &githubResponse)
+
+	if parseErr != nil {
+		return "", parseErr
+	}
+
+	return githubResponse.AccessToken, nil
 }

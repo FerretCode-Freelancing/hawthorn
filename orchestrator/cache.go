@@ -19,6 +19,7 @@ type CacheData struct {
 type CacheJob struct {
 	Name string `json:"name"`
 	ContainerId string `json:"container_id"`
+	ImageName string `json:"image_name"`
 }
 
 func NewCache(c Cache) Cache {
@@ -27,6 +28,28 @@ func NewCache(c Cache) Cache {
 	}
 
 	return c
+}
+
+func (c *Cache) ListCache() ([]CacheJob, error) {
+	file, err := os.Open(c.Path)
+
+	if err != nil {
+		return []CacheJob{}, err
+	}
+
+	data, err := io.ReadAll(file)
+
+	if err != nil {
+		return []CacheJob{}, err
+	}
+
+	cacheData := CacheData{}
+
+	if err := json.Unmarshal(data, &cacheData); err != nil {
+		return []CacheJob{}, err
+	}
+
+	return cacheData.Jobs, nil
 }
 
 func (c *Cache) SearchCache(id string) (Job, error) {
@@ -94,6 +117,7 @@ func (c *Cache) CacheJob(j Job) error {
 	job := CacheJob{
 		Name: j.Name,
 		ContainerId: j.Id,
+		ImageName: j.ImageName,
 	} 
 
 	cacheData.Jobs = append(cacheData.Jobs, job)

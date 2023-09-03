@@ -23,8 +23,6 @@ type Job struct {
 	Health    int
 }
 
-// TODO: cache containers & resume if program restarted
-
 func NewJob(job Job) Job {
 	job.Context = context.Background()
 

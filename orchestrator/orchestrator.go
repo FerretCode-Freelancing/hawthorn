@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -30,7 +31,11 @@ func NewOrchestrator(o Orchestrator) (Orchestrator, error) {
 
 	ticker := time.NewTicker(5 * time.Second)
 
-	o.reattach(*client)
+	err = o.reattach(*client)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	go func() {
 		for {
@@ -43,13 +48,11 @@ func NewOrchestrator(o Orchestrator) (Orchestrator, error) {
 	return o, nil
 }
 
-func (o *Orchestrator) reattach(client client.Client) {
+func (o *Orchestrator) reattach(client client.Client) error {
   containers, err := client.ContainerList(o.Context, types.ContainerListOptions{}) 
 
   if err != nil {
-    fmt.Println(err)
-
-    return 
+    return err 
   }
 
   for _, container := range containers {
@@ -68,7 +71,44 @@ func (o *Orchestrator) reattach(client client.Client) {
 		fmt.Println(o.Jobs)
   }
 
-  return 
+	cachedJobs, err := o.Cache.ListCache()
+
+	if err != nil {
+		return err
+	}
+
+	for _, cacheJob := range cachedJobs {
+		active := false
+
+		for _, container := range containers {
+			if container.ID == cacheJob.ContainerId {
+				active = true
+
+				fmt.Println(active)
+
+				break
+			}
+		}
+
+		if active { continue }
+
+		fmt.Println(cacheJob)
+
+		job := NewJob(Job{
+			Name: cacheJob.Name,
+			ImageName: cacheJob.ImageName,	
+		})
+
+		err = job.Run()
+
+		if err != nil {
+			return err
+		}
+
+		o.Jobs = append(o.Jobs, job)
+	}
+
+  return nil 
 }
 
 func (o *Orchestrator) autoHeal(client client.Client) {

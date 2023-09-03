@@ -52,6 +52,16 @@ func main() {
 
 		if err != nil {
 			fmt.Println(err)
+
+			http.Error(w, "There was an error logging you in.", http.StatusInternalServerError)
+		}
+	})
+
+	r.Get("/auth/callback", func(w http.ResponseWriter, r *http.Request) {
+		err := auth.Callback(w, r)
+
+		if err != nil {
+			fmt.Println(err)
 		}
 	})
 
@@ -61,6 +71,8 @@ func main() {
 
 		if err != nil {
 			fmt.Println(err)
+
+			http.Error(w, "There was an error listing all containers.", http.StatusInternalServerError)
 		}
 	})
 
@@ -69,6 +81,8 @@ func main() {
 
 		if err != nil {
 			fmt.Println(err)
+
+			http.Error(w, "There was an error creating a new container.", http.StatusInternalServerError)
 		}
 	})
 

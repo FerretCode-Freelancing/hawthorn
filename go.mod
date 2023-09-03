@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/SermoDigital/jose v0.9.1 // indirect
 	github.com/containerd/containerd v1.7.1 // indirect
 	github.com/deta/deta-go v1.0.0 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
