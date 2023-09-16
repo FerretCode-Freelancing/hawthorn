@@ -41,11 +41,15 @@ func (j *Job) Run() error {
 
 	fmt.Println(j.ImageName)
 
-	p := fmt.Sprintf("%s/tcp", strconv.Itoa(j.Port))
-	port, err := nat.NewPort("tcp", p)
+	var port nat.Port
 
-	if err != nil {
-		return err
+	if j.Port > 0 {
+		p := fmt.Sprintf("%s/tcp", strconv.Itoa(j.Port))
+		port, err = nat.NewPort("tcp", p)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	hostConfig := container.HostConfig{
@@ -59,19 +63,42 @@ func (j *Job) Run() error {
 		},
 	}
 
-	res, err := cli.ContainerCreate(
-		j.Context,
-		&container.Config{
-			Image: j.ImageName,
-			ExposedPorts: nat.PortSet{
-				port: struct{}{},
+	var res container.CreateResponse
+
+	if j.Port > 0 {
+		res, err = cli.ContainerCreate(
+			j.Context,
+			&container.Config{
+				Image: j.ImageName,
+				ExposedPorts: nat.PortSet{
+					port: struct{}{},
+				},
 			},
-		},
-		&hostConfig,
-		nil,
-		nil,
-		"",
-	)
+			&hostConfig,
+			nil,
+			nil,
+			"",
+		)
+
+		if err != nil {
+			return err
+		}
+	} else {
+		res, err = cli.ContainerCreate(
+			j.Context,
+			&container.Config{
+				Image: j.ImageName,
+			},
+			nil,
+			nil,
+			nil,
+			"",
+		)
+
+		if err != nil {
+			return err
+		}
+	}
 
 	if err != nil {
 		return err
