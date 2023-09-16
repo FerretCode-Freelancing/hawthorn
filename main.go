@@ -27,14 +27,19 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if _, err := os.Stat("/tmp/hawthorn/cache.json"); os.IsNotExist(err) == true {
-		err = os.WriteFile("/tmp/hawthorn/cache.json", []byte("{}"), fs.ModePerm)
+	homeDir, err := os.UserHomeDir()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := os.Stat(homeDir + "/hawthorn/cache.json"); os.IsNotExist(err) == true {
+		err = os.WriteFile(homeDir + "/hawthorn/cache.json", []byte("{}"), fs.ModePerm)
 
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-
 
 	ctx := context.Background()
 
