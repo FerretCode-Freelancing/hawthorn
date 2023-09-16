@@ -21,7 +21,7 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.RealIP)
 
-	err := os.MkdirAll("/tmp/hawthorn", os.ModePerm)
+	err := os.MkdirAll("/home/fc/hawthorn", os.ModePerm)
 
 	if err != nil {
 		log.Fatal(err)
