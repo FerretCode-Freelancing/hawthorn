@@ -32,6 +32,14 @@ func Build(ownerId int, repoName string, entrypointPath string) error {
 		repoName,
 	)
 
+	directories, err := os.ReadDir(path)
+
+	if err != nil {
+		return err
+	}
+
+	path += "/" + directories[0].Name()
+
 	if entrypointPath != "" {
 		path += entrypointPath
 	}
