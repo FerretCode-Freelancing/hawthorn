@@ -3,7 +3,6 @@ package orchestrator
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -21,6 +20,7 @@ type CacheJob struct {
 	Name string `json:"name"`
 	ContainerId string `json:"container_id"`
 	ImageName string `json:"image_name"`
+	Port int `json:"port"`
 }
 
 func NewCache(c Cache) Cache {
@@ -81,8 +81,6 @@ func (c *Cache) SearchCache(id string) (Job, error) {
 	}
 
   for _, job := range cacheData.Jobs {
-		fmt.Println(job)
-
     if job.ContainerId == id {
       job := NewJob(
         Job{
@@ -90,6 +88,7 @@ func (c *Cache) SearchCache(id string) (Job, error) {
           ImageName: job.Name,
           Id: job.ContainerId,
           Health: Healthy,
+					Port: job.Port,
         },
       )
 
@@ -125,6 +124,7 @@ func (c *Cache) CacheJob(j Job) error {
 		Name: j.Name,
 		ContainerId: j.Id,
 		ImageName: j.ImageName,
+		Port: j.Port,
 	} 
 
 	cacheData.Jobs = append(cacheData.Jobs, job)

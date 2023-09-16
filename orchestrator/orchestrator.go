@@ -97,6 +97,7 @@ func (o *Orchestrator) reattach(client client.Client) error {
 		job := NewJob(Job{
 			Name: cacheJob.Name,
 			ImageName: cacheJob.ImageName,	
+			Port: cacheJob.Port,
 		})
 
 		err = job.Run()
