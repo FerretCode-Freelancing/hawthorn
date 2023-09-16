@@ -3,10 +3,12 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 )
 
 const (
@@ -17,6 +19,7 @@ const (
 
 type Job struct {
 	Context   context.Context
+	Port int
 	Name      string
 	ImageName string
 	Id        string
@@ -38,12 +41,33 @@ func (j *Job) Run() error {
 
 	fmt.Println(j.ImageName)
 
+	p := fmt.Sprintf("%s/tcp", strconv.Itoa(j.Port))
+	port, err := nat.NewPort("tcp", p)
+
+	if err != nil {
+		return err
+	}
+
+	hostConfig := container.HostConfig{
+		PortBindings: nat.PortMap{
+			port: []nat.PortBinding{
+				{
+					HostIP: "0.0.0.0",
+					HostPort: strconv.Itoa(j.Port),
+				},
+			},
+		},
+	}
+
 	res, err := cli.ContainerCreate(
 		j.Context,
 		&container.Config{
 			Image: j.ImageName,
+			ExposedPorts: nat.PortSet{
+				port: struct{}{},
+			},
 		},
-		nil,
+		&hostConfig,
 		nil,
 		nil,
 		"",

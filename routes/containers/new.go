@@ -19,6 +19,7 @@ type Container struct {
 	Name    string `json:"name"`
 	RepoURL string `json:"repo_url"`
 	EntrypointPath string `json:"entrypoint_path"`
+	Port int `json:"port"`
 }
 
 func New(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) error {
@@ -71,6 +72,7 @@ func New(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) er
 	job := orchestrator.NewJob(orchestrator.Job{
 		Name:      repoName[len(repoName)-1],
 		ImageName: repoName[len(repoName)-1],
+		Port: container.Port,
 	})
 
 	err = o.New(job)
