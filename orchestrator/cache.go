@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 )
 
@@ -23,8 +24,14 @@ type CacheJob struct {
 }
 
 func NewCache(c Cache) Cache {
+	homeDir, err := os.UserHomeDir()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if c.Path == "" {
-		c.Path = "/tmp/hawthorn/cache.json"
+		c.Path = homeDir + "/hawthorn/cache.json"
 	}
 
 	return c

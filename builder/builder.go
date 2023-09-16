@@ -19,8 +19,15 @@ func Build(ownerId int, repoName string, entrypointPath string) error {
 		return err
 	}
 
+	homeDir, err := os.UserHomeDir()
+
+	if err != nil {
+		return err
+	}
+
 	path := fmt.Sprintf(
-		"/tmp/hawthorn/out/%s-%s",
+		"%s/hawthorn/out/%s-%s",
+		homeDir,
 		strconv.FormatInt(int64(ownerId), 10),
 		repoName,
 	)

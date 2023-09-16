@@ -23,6 +23,12 @@ var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 func Download(r *http.Request, repoURL string) error {
 	ctx := context.Background()
 
+	homeDir, err := os.UserHomeDir()
+
+	if err != nil {
+		return err
+	}
+
 	session, _ := store.Get(r, "hawthorn")
 
 	if session.Values["token"] == nil {
@@ -80,7 +86,8 @@ func Download(r *http.Request, repoURL string) error {
 
 	file, err := os.Create(
 		fmt.Sprintf(
-			"/tmp/hawthorn/%s-%s.zip",
+			"%s/hawthorn/%s-%s.zip",
+			homeDir,
 			strconv.FormatInt(*repo.Owner.ID, 10),
 			*repo.Name,
 		),
@@ -108,15 +115,23 @@ func Download(r *http.Request, repoURL string) error {
 }
 
 func ExtractRepo(ownerId int, repoName string) error {
+	homeDir, err := os.UserHomeDir()
+
+	if err != nil {
+		return err
+	}
+
 	outputDir := fmt.Sprintf(
-		"/tmp/hawthorn/out/%s-%s",
+		"%s/hawthorn/out/%s-%s",
+		homeDir,
 		strconv.FormatInt(int64(ownerId), 10),
 		repoName,
 	)
 
 	zipball, err := zip.OpenReader(
 		fmt.Sprintf(
-			"/tmp/hawthorn/%s-%s.zip",
+			"%s/hawthorn/%s-%s.zip",
+			homeDir,
 			strconv.FormatInt(int64(ownerId), 10),
 			repoName,
 		),
