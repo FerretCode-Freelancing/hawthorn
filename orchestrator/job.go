@@ -44,8 +44,7 @@ func (j *Job) Run() error {
 	var port nat.Port
 
 	if j.Port > 0 {
-		p := fmt.Sprintf("%s/tcp", strconv.Itoa(j.Port))
-		port, err = nat.NewPort("tcp", p)
+		port, err = nat.NewPort("tcp", strconv.Itoa(j.Port))
 
 		if err != nil {
 			return err
