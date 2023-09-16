@@ -1,10 +1,10 @@
 package builder
 
 import (
-	"io"
-	"os"
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 
 	"github.com/docker/docker/api/types"
@@ -12,7 +12,7 @@ import (
 	"github.com/docker/docker/pkg/archive"
 )
 
-func Build(ownerId int, repoName string) error {
+func Build(ownerId int, repoName string, entrypointPath string) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 
 	if err != nil {
@@ -24,6 +24,10 @@ func Build(ownerId int, repoName string) error {
 		strconv.FormatInt(int64(ownerId), 10),
 		repoName,
 	)
+
+	if entrypointPath != "" {
+		path += entrypointPath
+	}
 
 	buildContext, err := archive.TarWithOptions(path, &archive.TarOptions{})
 

@@ -18,6 +18,7 @@ var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 type Container struct {
 	Name    string `json:"name"`
 	RepoURL string `json:"repo_url"`
+	EntrypointPath string `json:"entrypoint_path"`
 }
 
 func New(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) error {
@@ -57,7 +58,7 @@ func New(w http.ResponseWriter, r *http.Request, o orchestrator.Orchestrator) er
 		return err
 	}
 
-	err = builder.Build(session.Values["owner"].(int), repoName[len(repoName)-1])
+	err = builder.Build(session.Values["owner"].(int), repoName[len(repoName)-1], container.EntrypointPath)
 
 	if err != nil {
 		http.Error(w, "there was an error building your repository", http.StatusInternalServerError)
