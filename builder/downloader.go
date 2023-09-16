@@ -144,8 +144,6 @@ func ExtractRepo(ownerId int, repoName string) error {
 	defer zipball.Close()
 
 	for _, file := range zipball.File {
-		file.Name = filepath.Base(file.Name)
-
 		path := filepath.Join(outputDir, file.Name)
 
 		if !strings.HasPrefix(path, filepath.Clean(outputDir)+string(os.PathSeparator)) {
