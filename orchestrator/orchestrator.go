@@ -9,7 +9,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	ctnr "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
+	cli "github.com/docker/docker/client"
 )
 
 type Orchestrator struct {
@@ -19,7 +19,7 @@ type Orchestrator struct {
 }
 
 func NewOrchestrator(o Orchestrator) (Orchestrator, error) {
-	client, err := client.NewClientWithOpts(client.FromEnv)
+	client, err := cli.NewClientWithOpts(cli.FromEnv)
 
 	if err != nil {
 		return Orchestrator{}, err
@@ -48,7 +48,7 @@ func NewOrchestrator(o Orchestrator) (Orchestrator, error) {
 	return o, nil
 }
 
-func (o *Orchestrator) reattach(client client.Client) error {
+func (o *Orchestrator) reattach(client cli.Client) error {
   containers, err := client.ContainerList(o.Context, types.ContainerListOptions{}) 
 
   if err != nil {
@@ -112,8 +112,8 @@ func (o *Orchestrator) reattach(client client.Client) error {
   return nil 
 }
 
-func (o *Orchestrator) autoHeal(client client.Client) {
-	for _, job := range o.Jobs {
+func (o *Orchestrator) autoHeal(client cli.Client) {
+	for i, job := range o.Jobs {
 		if len(job.Id) == 0 {
 			continue
 		}
@@ -122,6 +122,10 @@ func (o *Orchestrator) autoHeal(client client.Client) {
 
 		if err != nil {
 			fmt.Println(err)
+
+			if cli.IsErrNotFound(err) {
+				o.Jobs = append(o.Jobs[:i], o.Jobs[:i+1]...)
+			}
 
 			continue
 		}
@@ -136,7 +140,7 @@ func (o *Orchestrator) autoHeal(client client.Client) {
 	}
 }
 
-func (o *Orchestrator) autoClean(client client.Client) {
+func (o *Orchestrator) autoClean(client cli.Client) {
 	for i, job := range o.Jobs {
 		if len(job.Id) == 0 {
 			continue
@@ -146,6 +150,10 @@ func (o *Orchestrator) autoClean(client client.Client) {
 
 		if err != nil {
 			fmt.Println(err)
+
+			if cli.IsErrNotFound(err) {
+				o.Jobs = append(o.Jobs[:i], o.Jobs[:i+1]...)
+			}
 
 			continue
 		}

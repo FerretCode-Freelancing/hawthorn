@@ -36,7 +36,7 @@ func NewCache(c Cache) Cache {
 
 	return c
 }
-
+ 
 func (c *Cache) ListCache() ([]CacheJob, error) {
 	file, err := os.Open(c.Path)
 
