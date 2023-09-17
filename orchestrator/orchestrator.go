@@ -152,6 +152,8 @@ func (o *Orchestrator) autoClean(client cli.Client) {
 			fmt.Println(err)
 
 			if cli.IsErrNotFound(err) {
+				fmt.Println("not found")
+
 				o.Jobs = append(o.Jobs[:i], o.Jobs[:i+1]...)
 			}
 
