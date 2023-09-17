@@ -38,6 +38,52 @@ func Build(ownerId int, repoName string, entrypointPath string) error {
 		return err
 	}
 
+	var currentDirectory os.DirEntry 
+
+	currentDirectory = directories[0]
+	currentIndex := 0
+
+	currentInfo, err := currentDirectory.Info()
+
+	if err != nil {
+		return err
+	}
+
+	for i, directory := range directories {
+		info, err := directory.Info()
+
+		if err != nil {
+			return err
+		}
+
+		if info.ModTime().Before(currentInfo.ModTime()) {
+			currentDirectory = directory	
+			currentIndex = i
+
+			newInfo, err := currentDirectory.Info()
+
+			if err != nil {
+				return err
+			}
+
+			currentInfo = newInfo
+		}
+	}
+
+	directories = append(directories[:currentIndex], directories[:currentIndex+1]...)
+
+	for _, directory := range directories {
+		err := os.RemoveAll(directory.Name())
+
+		if err != nil {
+			return err
+		}
+	}
+
+	directories = []os.DirEntry{
+		currentDirectory,
+	}
+
 	path += "/" + directories[0].Name()
 
 	if entrypointPath != "" {
