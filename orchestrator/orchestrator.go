@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -149,24 +148,6 @@ func (o *Orchestrator) autoClean(client client.Client) {
 			fmt.Println(err)
 
 			continue
-		}
-
-		_, err = o.Cache.SearchCache(job.Id)
-
-		if err != nil {
-			err := o.Cache.UncacheJob(job)
-
-			if err != nil {
-				fmt.Println(err)
-
-				continue
-			}
-
-			if !strings.Contains(err.Error(), "no job found") {
-				fmt.Println(err)	
-
-				continue
-			}
 		}
 
 		if container.RestartCount >= 6 {
