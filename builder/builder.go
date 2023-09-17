@@ -56,7 +56,7 @@ func Build(ownerId int, repoName string, entrypointPath string) error {
 			return err
 		}
 
-		if info.ModTime().Before(currentInfo.ModTime()) {
+		if info.ModTime().After(currentInfo.ModTime()) {
 			currentDirectory = directory	
 			currentIndex = i
 
