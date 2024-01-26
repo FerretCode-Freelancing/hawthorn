@@ -8,6 +8,11 @@ hawthorn is a tool for running, healing & autocleaning containers that you creat
 
 cli coming soon
 
+## roadmap
+
+- cli
+- fix issues with container reattachment
+
 ## how it works
 
 - start the orchestrator by downloading the latest release & running it
